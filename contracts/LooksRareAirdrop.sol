@@ -32,9 +32,9 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
     IERC20 public immutable looksRareToken;
 
     // address public immutable MAIN_STRATEGY;
-    address public immutable TRANSFER_MANAGER_ERC721;
-    address public immutable TRANSFER_MANAGER_ERC1155;
-    address public immutable WETH;
+    // address public immutable TRANSFER_MANAGER_ERC721;
+    // address public immutable TRANSFER_MANAGER_ERC1155;
+    // address public immutable WETH;
 
     // bytes32 public immutable DOMAIN_SEPARATOR_EXCHANGE;
 
@@ -59,9 +59,6 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
      * @notice Constructor
      * @param _endTimestamp end timestamp for claiming
      * @param _looksRareToken address of the LooksRare token
-     * @param _transferManagerERC721 address of the transfer manager for ERC721 for LooksRare exchange
-     * @param _transferManagerERC1155 address of the transfer manager for ERC1155 for LooksRare exchange
-     * @param _weth wrapped ETH address
      * @param _maximumAmountToClaim maximum amount to claim per a user
      */
     constructor(
@@ -69,11 +66,11 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         uint256 _maximumAmountToClaim,
         address _looksRareToken,
         // bytes32 _domainSeparator,
-        address _transferManagerERC721,
-        address _transferManagerERC1155,
+        // address _transferManagerERC721,
+        // address _transferManagerERC1155,
         // address _mainStrategy,
-        address _market,
-        address _weth
+        address _market
+        // address _weth
     ) {
         endTimestamp = _endTimestamp;
         MAXIMUM_AMOUNT_TO_CLAIM = _maximumAmountToClaim;
@@ -81,11 +78,11 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         looksRareToken = IERC20(_looksRareToken);
 
         // DOMAIN_SEPARATOR_EXCHANGE = _domainSeparator;
-        TRANSFER_MANAGER_ERC721 = _transferManagerERC721;
-        TRANSFER_MANAGER_ERC1155 = _transferManagerERC1155;
+        // TRANSFER_MANAGER_ERC721 = _transferManagerERC721;
+        // TRANSFER_MANAGER_ERC1155 = _transferManagerERC1155;
 
         // MAIN_STRATEGY = _mainStrategy;
-        WETH = _weth;
+        // WETH = _weth;
 
         fraktalMarket = _market;
     }
