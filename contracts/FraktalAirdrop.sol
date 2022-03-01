@@ -9,19 +9,12 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
-import {OrderTypes} from "./OrderTypes.sol";
-import {SignatureChecker} from "./SignatureChecker.sol";
 import {FraktalMarket} from "./FraktalMarket.sol";
 
-/**
- * @title LooksRareAirdrop
- * @notice It distributes LOOKS tokens with a Merkle-tree airdrop.
- */
-contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
+contract FraktalAirdrop is Pausable, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
-    using OrderTypes for OrderTypes.MakerOrder;
 
+    //for referencing auction listing
     struct AuctionListing {
         address tokenAddress;
         uint256 reservePrice;
@@ -29,15 +22,7 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         uint256 auctionEndTime;
     }
 
-    IERC20 public immutable looksRareToken;
-
-    // address public immutable MAIN_STRATEGY;
-    // address public immutable TRANSFER_MANAGER_ERC721;
-    // address public immutable TRANSFER_MANAGER_ERC1155;
-    // address public immutable WETH;
-
-    // bytes32 public immutable DOMAIN_SEPARATOR_EXCHANGE;
-
+    IERC20 public immutable fraktalToken;
     uint256 public immutable MAXIMUM_AMOUNT_TO_CLAIM;
 
     bool public isMerkleRootSet;
@@ -45,6 +30,8 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
     bytes32 public merkleRoot;
 
     uint256 public endTimestamp;
+
+    uint256 public startBlock;
 
     mapping(address => bool) public hasClaimed;
 
@@ -55,53 +42,32 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
     event NewEndTimestamp(uint256 endTimestamp);
     event TokensWithdrawn(uint256 amount);
 
-    /**
-     * @notice Constructor
-     * @param _endTimestamp end timestamp for claiming
-     * @param _looksRareToken address of the LooksRare token
-     * @param _maximumAmountToClaim maximum amount to claim per a user
-     */
     constructor(
+        uint256 _startBlock,
         uint256 _endTimestamp,
         uint256 _maximumAmountToClaim,
-        address _looksRareToken,
-        // bytes32 _domainSeparator,
-        // address _transferManagerERC721,
-        // address _transferManagerERC1155,
-        // address _mainStrategy,
-        address _market
-        // address _weth
+        address _fraktalToken,
+        address _market,
+        bytes32 _merkleRoot
     ) {
+        startBlock = _startBlock;
         endTimestamp = _endTimestamp;
         MAXIMUM_AMOUNT_TO_CLAIM = _maximumAmountToClaim;
 
-        looksRareToken = IERC20(_looksRareToken);
-
-        // DOMAIN_SEPARATOR_EXCHANGE = _domainSeparator;
-        // TRANSFER_MANAGER_ERC721 = _transferManagerERC721;
-        // TRANSFER_MANAGER_ERC1155 = _transferManagerERC1155;
-
-        // MAIN_STRATEGY = _mainStrategy;
-        // WETH = _weth;
-
+        fraktalToken = IERC20(_fraktalToken);
         fraktalMarket = _market;
+        merkleRoot = _merkleRoot;
+        mer
     }
 
-    /**
-     * @notice Claim tokens for airdrop
-     * @param amount amount to claim for the airdrop
-     * @param merkleProof array containing the merkle proof
-     * @param listedToken will be check if NFT listed on market
-     */
     function claim(
         uint256 amount,
         bytes32[] calldata merkleProof,
-        // OrderTypes.MakerOrder calldata makerAsk,
-        // bool isERC721
         address listedToken
     ) external whenNotPaused nonReentrant {
         require(isMerkleRootSet, "Airdrop: Merkle root not set");
         require(amount <= MAXIMUM_AMOUNT_TO_CLAIM, "Airdrop: Amount too high");
+        require(block.number < startBlock, "Airdrop: Too early to claim");
         require(block.timestamp <= endTimestamp, "Airdrop: Too late to claim");
 
         // Verify the user has claimed
@@ -109,43 +75,11 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
 
         uint256 listedAmount = FraktalMarket(payable(fraktalMarket)).getListingAmount(msg.sender,listedToken);
         (,,uint256 listedAuctionAmount,) = FraktalMarket(payable(fraktalMarket)).auctionListings(listedToken,msg.sender,0);
-        // AuctionListing memory listedAuction = FraktalMarket(fraktalMarket).auctionListings(listedToken,msg.sender,0);
 
         //check if any listing available
         bool isListed = listedAmount > 0 || listedAuctionAmount > 0;
-        require(isListed,"No listed");
+        require(isListed,"No NFT listed");
 
-        // Checks on orders
-        // require(_isOrderMatchingRequirements(makerAsk), "Airdrop: Order not eligible for airdrop");
-
-        // Compute the hash
-        // bytes32 askHash = makerAsk.hash();
-
-        // // Verify signature is legit
-        // require(
-        //     SignatureChecker.verify(
-        //         askHash,
-        //         makerAsk.signer,
-        //         makerAsk.v,
-        //         makerAsk.r,
-        //         makerAsk.s,
-        //         DOMAIN_SEPARATOR_EXCHANGE
-        //     ),
-        //     "Airdrop: Signature invalid"
-        // );
-
-        // Verify tokens are approved
-        // if (isERC721) {
-        //     require(
-        //         IERC721(makerAsk.collection).isApprovedForAll(msg.sender, TRANSFER_MANAGER_ERC721),
-        //         "Airdrop: Collection must be approved"
-        //     );
-        // } else {
-        //     require(
-        //         IERC1155(makerAsk.collection).isApprovedForAll(msg.sender, TRANSFER_MANAGER_ERC1155),
-        //         "Airdrop: Collection must be approved"
-        //     );
-        // }
 
         // Compute the node and verify the merkle proof
         bytes32 node = keccak256(abi.encodePacked(msg.sender, amount));
@@ -158,17 +92,11 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         amount = this.parseTier(amount);
 
         // Transfer tokens
-        looksRareToken.safeTransfer(msg.sender, amount);
+        fraktalToken.safeTransfer(msg.sender, amount);
 
         emit AirdropRewardsClaim(msg.sender, amount);
     }
 
-    /**
-     * @notice Check whether it is possible to claim (it doesn't check orders)
-     * @param user address of the user
-     * @param amount amount to claim
-     * @param merkleProof array containing the merkle proof
-     */
     function canClaim(
         address user,
         uint256 amount,
@@ -183,38 +111,14 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         }
     }
 
-    /**
-     * @notice Pause airdrop
-     */
     function pauseAirdrop() external onlyOwner whenNotPaused {
         _pause();
     }
 
-    /**
-     * @notice Set merkle root for airdrop
-     * @param _merkleRoot merkle root
-     */
-    function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        require(!isMerkleRootSet, "Owner: Merkle root already set");
-
-        isMerkleRootSet = true;
-        merkleRoot = _merkleRoot;
-
-        emit MerkleRootSet(_merkleRoot);
-    }
-
-    /**
-     * @notice Unpause airdrop
-     */
     function unpauseAirdrop() external onlyOwner whenPaused {
         _unpause();
     }
 
-    /**
-     * @notice Update end timestamp
-     * @param newEndTimestamp new endtimestamp
-     * @dev Must be within 30 days
-     */
     function updateEndTimestamp(uint256 newEndTimestamp) external onlyOwner {
         require(block.timestamp + 30 days > newEndTimestamp, "Owner: New timestamp too far");
         endTimestamp = newEndTimestamp;
@@ -222,20 +126,15 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
         emit NewEndTimestamp(newEndTimestamp);
     }
 
-    /**
-     * @notice Transfer tokens back to owner
-     */
     function withdrawTokenRewards() external onlyOwner {
         require(block.timestamp > (endTimestamp + 1 days), "Owner: Too early to remove rewards");
-        uint256 balanceToWithdraw = looksRareToken.balanceOf(address(this));
-        looksRareToken.safeTransfer(msg.sender, balanceToWithdraw);
+        uint256 balanceToWithdraw = fraktalToken.balanceOf(address(this));
+        fraktalToken.safeTransfer(msg.sender, balanceToWithdraw);
 
         emit TokensWithdrawn(balanceToWithdraw);
     }
 
-    /**
-     * @notice Parse Looksrare tier to Fraktal new token distribution (https://docs.fraktal.io/fraktal-governance-token-frak/airdrop)
-    */
+    //refer https://docs.fraktal.io/fraktal-governance-token-frak/airdrop
     function parseTier(uint256 amount) public pure returns (uint256 parsed){
         if(amount == 10000 ether){
             return 7900 ether;
@@ -270,17 +169,4 @@ contract LooksRareAirdrop is Pausable, ReentrancyGuard, Ownable {
     function setFraktalMarket(address _market) external{
         fraktalMarket = _market;
     }
-
-    /**
-     * @notice Check whether order is matching requirements for airdrop
-     * @param makerAsk makerAsk order
-     */
-    // function _isOrderMatchingRequirements(OrderTypes.MakerOrder calldata makerAsk) internal view returns (bool) {
-    //     return
-    //         (makerAsk.isOrderAsk) &&
-    //         (makerAsk.signer == msg.sender) &&
-    //         (makerAsk.amount > 0) &&
-    //         (makerAsk.currency == WETH) &&
-    //         (makerAsk.strategy == MAIN_STRATEGY);
-    // }
 }
