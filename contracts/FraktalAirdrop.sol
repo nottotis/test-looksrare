@@ -50,14 +50,14 @@ contract FraktalAirdrop is Pausable, ReentrancyGuard, Ownable {
         address _market,
         bytes32 _merkleRoot
     ) {
-        startBlock = _startBlock;
-        endTimestamp = _endTimestamp;
+        startBlock = _startBlock;//1647518400
+        endTimestamp = _endTimestamp;//1648382400
         MAXIMUM_AMOUNT_TO_CLAIM = _maximumAmountToClaim;
 
         fraktalToken = IERC20(_fraktalToken);
         fraktalMarket = _market;
         merkleRoot = _merkleRoot;
-        mer
+        isMerkleRootSet = true;
     }
 
     function claim(
