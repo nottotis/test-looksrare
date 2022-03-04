@@ -1,20 +1,20 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "txHash": "0xaadf23fa4a3e3a949d0e1bfe3474024727ee172465c396a6e111bda3bbaa94b2",
+    "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    "txHash": "0x0d22982e813e3b36f2efa9d02c45361fe4a009dee67be80e5f51d3dc654d6d14",
     "deployTransaction": {
-      "hash": "0xaadf23fa4a3e3a949d0e1bfe3474024727ee172465c396a6e111bda3bbaa94b2",
+      "hash": "0x0d22982e813e3b36f2efa9d02c45361fe4a009dee67be80e5f51d3dc654d6d14",
       "type": 2,
       "accessList": [],
-      "blockHash": "0x65d8c65ff5f731fe4e7daf506119f1a341f7226d8968cb3a888344a6ebe0f970",
-      "blockNumber": 3,
+      "blockHash": "0x2a95abe77a0b00a2d96de48dfa9fb132c46c9b946b96fef9d95d2197e8711043",
+      "blockNumber": 6,
       "transactionIndex": 0,
       "confirmations": 1,
       "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "gasPrice": {
         "type": "BigNumber",
-        "hex": "0x65f84131"
+        "hex": "0x57adfc15"
       },
       "maxPriorityFeePerGas": {
         "type": "BigNumber",
@@ -22,7 +22,7 @@
       },
       "maxFeePerGas": {
         "type": "BigNumber",
-        "hex": "0x9055b862"
+        "hex": "0x73c12e2a"
       },
       "gasLimit": {
         "type": "BigNumber",
@@ -33,12 +33,12 @@
         "type": "BigNumber",
         "hex": "0x00"
       },
-      "nonce": 2,
+      "nonce": 5,
       "data": "0x608060405234801561001057600080fd5b50600080546001600160a01b031916339081178255604051909182917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a350610759806100616000396000f3fe60806040526004361061007b5760003560e01c80639623609d1161004e5780639623609d1461011157806399a88ec414610124578063f2fde38b14610144578063f3b7dead146101645761007b565b8063204e1c7a14610080578063715018a6146100bc5780637eff275e146100d35780638da5cb5b146100f3575b600080fd5b34801561008c57600080fd5b506100a061009b366004610515565b610184565b6040516001600160a01b03909116815260200160405180910390f35b3480156100c857600080fd5b506100d1610215565b005b3480156100df57600080fd5b506100d16100ee366004610554565b610292565b3480156100ff57600080fd5b506000546001600160a01b03166100a0565b6100d161011f36600461058c565b61031c565b34801561013057600080fd5b506100d161013f366004610554565b6103ad565b34801561015057600080fd5b506100d161015f366004610515565b610405565b34801561017057600080fd5b506100a061017f366004610515565b6104ef565b6000806000836001600160a01b03166040516101aa90635c60da1b60e01b815260040190565b600060405180830381855afa9150503d80600081146101e5576040519150601f19603f3d011682016040523d82523d6000602084013e6101ea565b606091505b5091509150816101f957600080fd5b8080602001905181019061020d9190610538565b949350505050565b6000546001600160a01b031633146102485760405162461bcd60e51b815260040161023f906106c0565b60405180910390fd5b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031633146102bc5760405162461bcd60e51b815260040161023f906106c0565b6040516308f2839760e41b81526001600160a01b038281166004830152831690638f283970906024015b600060405180830381600087803b15801561030057600080fd5b505af1158015610314573d6000803e3d6000fd5b505050505050565b6000546001600160a01b031633146103465760405162461bcd60e51b815260040161023f906106c0565b60405163278f794360e11b81526001600160a01b03841690634f1ef286903490610376908690869060040161065d565b6000604051808303818588803b15801561038f57600080fd5b505af11580156103a3573d6000803e3d6000fd5b5050505050505050565b6000546001600160a01b031633146103d75760405162461bcd60e51b815260040161023f906106c0565b604051631b2ce7f360e11b81526001600160a01b038281166004830152831690633659cfe6906024016102e6565b6000546001600160a01b0316331461042f5760405162461bcd60e51b815260040161023f906106c0565b6001600160a01b0381166104945760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b606482015260840161023f565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b6000806000836001600160a01b03166040516101aa906303e1469160e61b815260040190565b600060208284031215610526578081fd5b81356105318161070b565b9392505050565b600060208284031215610549578081fd5b81516105318161070b565b60008060408385031215610566578081fd5b82356105718161070b565b915060208301356105818161070b565b809150509250929050565b6000806000606084860312156105a0578081fd5b83356105ab8161070b565b925060208401356105bb8161070b565b9150604084013567ffffffffffffffff808211156105d7578283fd5b818601915086601f8301126105ea578283fd5b8135818111156105fc576105fc6106f5565b604051601f8201601f19908116603f01168101908382118183101715610624576106246106f5565b8160405282815289602084870101111561063c578586fd5b82602086016020830137856020848301015280955050505050509250925092565b600060018060a01b038416825260206040818401528351806040850152825b818110156106985785810183015185820160600152820161067c565b818111156106a95783606083870101525b50601f01601f191692909201606001949350505050565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b634e487b7160e01b600052604160045260246000fd5b6001600160a01b038116811461072057600080fd5b5056fea2646970667358221220d849f96f3086b9f82cdcf665adb8c697ace05638da1c7c16ab2d26293717af6764736f6c63430008020033",
-      "r": "0x609fbac559f202a5489f40c02618a60bbd12ebfc7c5fc716929738f0cec75873",
-      "s": "0x79e39b5d0d02d34c75e4e18465d62089c9b4de6a32b3810d485259ed4c2be88d",
+      "r": "0x958e05653b75abb4b5801e793d2a24ddd1183f02ba5eaf681f02d40976eaf021",
+      "s": "0x2067af2c197582bc7c8b43a8b1537dcf91316a011ae8185c5b850655f276a1ac",
       "v": 1,
-      "creates": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "creates": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
       "chainId": 31337
     }
   },
@@ -46,6 +46,11 @@
     {
       "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
       "txHash": "0x0f654c1b59393e77c95737d8d7d21d5b2090b4867221d249971a33af0025f003",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0xd5cf4b0a0cf7c6a82e87e1ca03702747c2f1bb13a1d5e7fba6a736b0592dd926",
       "kind": "transparent"
     }
   ],
@@ -281,6 +286,171 @@
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "3d1fc308b04b03a2c9a991f9a4be2dee60ec879fa54519ed34ce3ba2c590b461": {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "txHash": "0xe375a98448c9845bdb091c9b8201f58c7fd837c3f55370b625869ad788317391",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:87"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "_status",
+            "type": "t_uint256",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "contract": "ReentrancyGuardUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "fraktalToken",
+            "type": "t_contract(IERC20Upgradeable)334",
+            "src": "contracts/FeeSharingSystem.sol:22"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "currentRewardPerBlock",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:23"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "lastRewardAdjustment",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:24"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "lastUpdateBlock",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:25"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "periodEndBlock",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/FeeSharingSystem.sol:26"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "rewardPerTokenStored",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:27"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "totalShares",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:28"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "rewardOnRound",
+            "type": "t_mapping(t_uint256,t_uint256)",
+            "src": "contracts/FeeSharingSystem.sol:30"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "roundNumber",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:31"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "startBlock",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:32"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "rewardDurationInBlocks",
+            "type": "t_uint256",
+            "src": "contracts/FeeSharingSystem.sol:33"
+          },
+          {
+            "contract": "FeeSharingSystem",
+            "label": "userInfo",
+            "type": "t_mapping(t_address,t_struct(UserInfo)1508_storage)",
+            "src": "contracts/FeeSharingSystem.sol:35"
+          }
+        ],
+        "types": {
+          "t_contract(IERC20Upgradeable)334": {
+            "label": "contract IERC20Upgradeable"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_mapping(t_address,t_struct(UserInfo)1508_storage)": {
+            "label": "mapping(address => struct FeeSharingSystem.UserInfo)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_struct(UserInfo)1508_storage": {
+            "label": "struct FeeSharingSystem.UserInfo",
+            "members": [
+              {
+                "label": "shares",
+                "type": "t_uint256"
+              },
+              {
+                "label": "userRewardPerTokenPaid",
+                "type": "t_uint256"
+              },
+              {
+                "label": "rewards",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }
