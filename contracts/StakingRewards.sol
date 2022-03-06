@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
+import "hardhat/console.sol";
+
 pragma solidity ^0.8.0;
 
 contract StakingRewards {
-    IERC20 public rewardsToken;
     IERC20 public stakingToken;
 
     struct RoundInfo{
@@ -10,6 +11,7 @@ contract StakingRewards {
         uint endBlock;
         uint rewardPerTokenStored;
         uint rewardRate;
+        bool passed;
     }
 
     struct UserRewardPerTokenpaid{
@@ -19,8 +21,9 @@ contract StakingRewards {
 
     uint public roundNumber;
     uint public lastUpdateBlock;
+    uint public rewardDurationInBlock;
 
-    mapping(uint=>RoundInfo) roundInfo;
+    mapping(uint=>RoundInfo) public roundInfo;
     // mapping(uint=>uint) public rewardRate; //roundNumber => rewardRate
     // mapping(uint=>uint) public rewardPerTokenStored; //roundNumber => rewardPerTokenStored
 
@@ -28,22 +31,23 @@ contract StakingRewards {
     mapping(address => UserRewardPerTokenpaid) public userRewardPerTokenPaid;
     mapping(address => uint) public rewards;
 
-    uint private _totalSupply;
-    mapping(address => uint) private _balances;
+    uint public _totalSupply;
+    mapping(address => uint) public _balances;
 
-    constructor(address _stakingToken, address _rewardsToken) {
+    constructor(address _stakingToken, uint _rewardDurationInBlock) {
         stakingToken = IERC20(_stakingToken);
-        rewardsToken = IERC20(_rewardsToken);
+        // rewardsToken = IERC20(_rewardsToken);
+        rewardDurationInBlock = _rewardDurationInBlock;
+        updateRewards();
     }
 
-    function rewardPerToken(uint _roundNumber) public view returns (uint) {
+    function rewardPerToken() public view returns (uint) {
         if (_totalSupply == 0) {
             return 0;
         }
-        uint _endBlock = block.number > roundInfo[_roundNumber].endBlock ? roundInfo[_roundNumber].endBlock : block.number;
-        return
-            roundInfo[_roundNumber].rewardPerTokenStored +
-            (((_endBlock - lastUpdateBlock) * roundInfo[_roundNumber].rewardRate * 1e18) / _totalSupply);
+        return roundInfo[roundNumber].rewardPerTokenStored +
+            (((block.number - lastUpdateBlock) * roundInfo[roundNumber].rewardRate * 1e18) / _totalSupply);
+
     }
 
     function earned(address account) public view returns (uint) {
@@ -52,25 +56,24 @@ contract StakingRewards {
         uint _userPaidAmount =  userRewardPerTokenPaid[account].amount;
         uint _userPaidRound = getRound(_userPaidBlockNumber);
 
+        console.log("%s < %s",_userPaidRound, roundNumber);
 
-        //if same periond
-        if(roundNumber==_userPaidRound){
-            return
-            ((_balances[account] *
-                (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18) +
-            rewards[account];
-        }else{
-            //if across multiple period
-            while(_userPaidRound<=roundNumber){
-                _earned += ((_balances[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18) + rewards[account];
-            }
+        while(_userPaidRound<roundNumber){
+                _earned += ((_balances[account] * (roundInfo[_userPaidRound].rewardPerTokenStored - _userPaidAmount)) / 1e18) + rewards[account];
+                _userPaidRound++;
         }
+        console.log("earned:",_earned);
 
-        
+
+        return
+            ((_balances[account] *
+                (rewardPerToken() - userRewardPerTokenPaid[account].amount)) / 1e18) +
+            rewards[account] + _earned;
     }
 
     modifier updateReward(address account) {
-        rewardPerTokenStored = rewardPerToken();
+        updateRewards();
+        roundInfo[roundNumber].rewardPerTokenStored = rewardPerToken();
         lastUpdateBlock = block.number;
 
         rewards[account] = earned(account);
@@ -93,20 +96,40 @@ contract StakingRewards {
 
     function getReward() external updateReward(msg.sender) {
         uint reward = rewards[msg.sender];
+        console.log(reward);
         rewards[msg.sender] = 0;
-        rewardsToken.transfer(msg.sender, reward);
+        // rewardsToken.transfer(msg.sender, reward);
+        (bool sent,) = msg.sender.call{value: reward}("");
+        require(sent, "Failed to send Ether");
     }
 
     function getRound(uint _blockNumber) public view returns(uint) {
-        uint _roundNumber = roundNumber;
-        while(_roundNumber>=0){
-            if(block.number <= roundInfo[_roundNumber].endBlock){
-                if(roundInfo[_roundNumber].startBlock < block.number){
-                    return _roundNumber;
-                }
+        uint _round = 0;
+        while(_round <= roundNumber){
+            if(_blockNumber < roundInfo[_round].endBlock){
+                return _round;
             }
-            _roundNumber--;
+            _round++;
         }
+        return 0;
+    }
+
+    function updateRewards() public {
+        if(block.number > roundInfo[roundNumber].endBlock){
+            roundInfo[roundNumber].passed = true;
+            if(_totalSupply!=0){
+                roundInfo[roundNumber].rewardPerTokenStored = roundInfo[roundNumber].rewardPerTokenStored + 
+                (((roundInfo[roundNumber].endBlock - lastUpdateBlock) * roundInfo[roundNumber].rewardRate * 1e18) / _totalSupply);
+            }
+
+            roundNumber++;
+            roundInfo[roundNumber].startBlock = block.number;
+            roundInfo[roundNumber].endBlock = rewardDurationInBlock;
+        }
+    }
+
+    receive() external payable{
+        roundInfo[roundNumber].rewardRate += msg.value;
     }
 }
 

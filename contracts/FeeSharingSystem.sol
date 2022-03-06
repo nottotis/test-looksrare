@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IERC20Upgradeable, SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "hardhat/console.sol";
 
 import {TokenDistributor} from "./TokenDistributor.sol";
 
-contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract FeeSharingSystem is Initializable,ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     struct UserInfo {
@@ -18,19 +18,28 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
         uint256 rewards; // pending rewards
     }
 
+    // Precision factor for calculating rewards and exchange rate
     uint256 public constant PRECISION_FACTOR = 10**18;
-    IERC20Upgradeable public  fraktalToken;
-    uint256 public currentRewardPerBlock;
-    uint256 public lastRewardAdjustment;
-    uint256 public lastUpdateBlock;
-    mapping(uint256=>uint256) public periodEndBlock;
-    uint256 public rewardPerTokenStored;
-    uint256 public totalShares;
 
-    mapping(uint256=>uint256) public rewardOnRound;
-    uint256 public roundNumber;
-    uint256 public startBlock;
-    uint256 public rewardDurationInBlocks;
+    IERC20Upgradeable public frakToken;
+
+    // Reward rate (block)
+    uint256 public currentRewardPerBlock;
+
+    // Last reward adjustment block number
+    uint256 public lastRewardAdjustment;
+
+    // Last update block for rewards
+    uint256 public lastUpdateBlock;
+
+    // Current end block for the current reward period
+    uint256 public periodEndBlock;
+
+    // Reward per token stored
+    uint256 public rewardPerTokenStored;
+
+    // Total existing shares
+    uint256 public totalShares;
 
     mapping(address => UserInfo) public userInfo;
 
@@ -39,41 +48,35 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
     event NewRewardPeriod(uint256 numberBlocks, uint256 rewardPerBlock, uint256 reward);
     event Withdraw(address indexed user, uint256 amount, uint256 harvestedAmount);
 
-    // constructor(
-    //     address _fraktalToken,
-    //     uint256 _rewardDurationInBlocks,
-    //     uint256 _startBlock
-    // ) {
-    //     fraktalToken = IERC20(_fraktalToken);
-    //     rewardDurationInBlocks = _rewardDurationInBlocks;
-    //     startBlock = _startBlock;
-    // }
-
     function initialize(
-        address _fraktalToken,
-        uint256 _rewardDurationInBlocks,
-        uint256 _startBlock
+        address _frakToken
     ) public initializer {
         __Ownable_init();
-        fraktalToken = IERC20Upgradeable(_fraktalToken);
-        rewardDurationInBlocks = _rewardDurationInBlocks;
-        startBlock = _startBlock;
+        // rewardToken = IERC20Upgradeable(_rewardToken);
+        frakToken = IERC20Upgradeable(_frakToken);
+        // tokenDistributor = TokenDistributor(_tokenDistributor);
     }
 
     function deposit(uint256 amount, bool claimRewardToken) external nonReentrant {
-        require(amount >= PRECISION_FACTOR, "Deposit: Amount must be >= 1 LOOKS");
+        require(amount >= PRECISION_FACTOR, "Deposit: Amount must be >= 1 FRAK");
 
 
         // Update reward for user
         _updateReward(msg.sender);
 
-        // Transfer LOOKS tokens to this address
-        fraktalToken.safeTransferFrom(msg.sender, address(this), amount);
+        // Retrieve total amount staked by this contract
+        // (uint256 totalAmountStaked, ) = tokenDistributor.userInfo(address(this));
+        uint256 totalAmountStaked = frakToken.balanceOf(address(this));
+
+        // Transfer FRAK tokens to this address
+        frakToken.safeTransferFrom(msg.sender, address(this), amount);
 
         uint256 currentShares;
 
+        // Calculate the number of shares to issue for the user
         if (totalShares != 0) {
-            currentShares = amount;
+            currentShares = (amount * totalShares) / totalAmountStaked;
+            // This is a sanity check to prevent deposit for 0 shares
             require(currentShares != 0, "Deposit: Fail");
         } else {
             currentShares = amount;
@@ -91,15 +94,15 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
 
             if (pendingRewards > 0) {
                 userInfo[msg.sender].rewards = 0;
-
+                // rewardToken.safeTransfer(msg.sender, pendingRewards);
                 (bool sent,) = msg.sender.call{value: pendingRewards}("");
                 require(sent, "Failed to send Ether");
-                // rewardToken.safeTransfer(msg.sender, pendingRewards);
             }
         }
 
         emit Deposit(msg.sender, amount, pendingRewards);
     }
+
     function harvest() external nonReentrant {
 
         // Update reward for user
@@ -115,6 +118,8 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
         userInfo[msg.sender].rewards = 0;
 
         // Transfer reward token to sender
+        // rewardToken.safeTransfer(msg.sender, pendingRewards);
+        // address payable receiver = payable(msg.sender);
         (bool sent,) = msg.sender.call{value: pendingRewards}("");
         require(sent, "Failed to send Ether");
 
@@ -134,27 +139,46 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
         _withdraw(userInfo[msg.sender].shares, claimRewardToken);
     }
 
-    function updateRewards() public {
+    function updateRewards(uint256 reward, uint256 rewardDurationInBlocks) external onlyOwner {
         // Adjust the current reward per block
-        if ((block.number > startBlock) && (block.number >= periodEndBlock[roundNumber]) ) {
-            //console.log("Updating reward",rewardOnRound[roundNumber]);
-            roundNumber++;
-            uint256 reward = rewardOnRound[roundNumber]; 
+        if (block.number >= periodEndBlock) {
             currentRewardPerBlock = reward / rewardDurationInBlocks;
+        } else {
+            currentRewardPerBlock =
+                (reward + ((periodEndBlock - block.number) * currentRewardPerBlock)) /
+                rewardDurationInBlocks;
+        }
 
-            lastUpdateBlock = block.number;
-            periodEndBlock[roundNumber] = block.number + rewardDurationInBlocks;
+        lastUpdateBlock = block.number;
+        periodEndBlock = block.number + rewardDurationInBlocks;
 
-            emit NewRewardPeriod(rewardDurationInBlocks, currentRewardPerBlock, reward);
-        } 
-        // else {
-        //     currentRewardPerBlock =
-        //         (reward + ((periodEndBlock - block.number) * currentRewardPerBlock)) /
-        //         rewardDurationInBlocks;
-        // }
+        emit NewRewardPeriod(rewardDurationInBlocks, currentRewardPerBlock, reward);
     }
+
     function calculatePendingRewards(address user) external view returns (uint256) {
         return _calculatePendingRewards(user);
+    }
+
+    function calculateSharesValueInFRAK(address user) external view returns (uint256) {
+        // Retrieve amount staked
+        // (uint256 totalAmountStaked, ) = tokenDistributor.userInfo(address(this));
+        uint256 totalAmountStaked = frakToken.balanceOf(address(this));
+
+        // Adjust for pending rewards
+        // totalAmountStaked += tokenDistributor.calculatePendingRewards(address(this));
+
+        // Return user pro-rata of total shares
+        return userInfo[user].shares == 0 ? 0 : (totalAmountStaked * userInfo[user].shares) / totalShares;
+    }
+
+    function calculateSharePriceInFRAK() external view returns (uint256) {
+        // (uint256 totalAmountStaked, ) = tokenDistributor.userInfo(address(this));
+        uint256 totalAmountStaked = frakToken.balanceOf(address(this));
+
+        // Adjust for pending rewards
+        // totalAmountStaked += tokenDistributor.calculatePendingRewards(address(this));
+
+        return totalShares == 0 ? PRECISION_FACTOR : (totalAmountStaked * PRECISION_FACTOR) / (totalShares);
     }
 
     function lastRewardBlock() external view returns (uint256) {
@@ -162,26 +186,26 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
     }
 
     function _calculatePendingRewards(address user) internal view returns (uint256) {
-        //console.log("userInfo[user].shares:%s,_rewardPerToken() %s,userInfo[user].userRewardPerTokenPaid %s",userInfo[user].shares,_rewardPerToken(),userInfo[user].userRewardPerTokenPaid);
-
         return
             ((userInfo[user].shares * (_rewardPerToken() - (userInfo[user].userRewardPerTokenPaid))) /
                 PRECISION_FACTOR) + userInfo[user].rewards;
     }
 
+    function _checkAndAdjustFRAKTokenAllowanceIfRequired(uint256 _amount, address _to) internal {
+        if (frakToken.allowance(address(this), _to) < _amount) {
+            frakToken.approve(_to, type(uint256).max);
+        }
+    }
+
     function _lastRewardBlock() internal view returns (uint256) {
-        return block.number <  periodEndBlock[roundNumber] ? block.number :  periodEndBlock[roundNumber];
+        return block.number < periodEndBlock ? block.number : periodEndBlock;
     }
 
     function _rewardPerToken() internal view returns (uint256) {
-        //console.log("TotalShare:",totalShares);
         if (totalShares == 0) {
             return rewardPerTokenStored;
         }
 
-
-        //console.log("rewardPerTokenStored:",rewardPerTokenStored);
-        //console.log("currentRewardPerBlock:",currentRewardPerBlock);
         return
             rewardPerTokenStored +
             ((_lastRewardBlock() - lastUpdateBlock) * (currentRewardPerBlock * PRECISION_FACTOR)) /
@@ -189,7 +213,6 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
     }
 
     function _updateReward(address _user) internal {
-        updateRewards();
         if (block.number != lastUpdateBlock) {
             rewardPerTokenStored = _rewardPerToken();
             lastUpdateBlock = _lastRewardBlock();
@@ -200,10 +223,14 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
     }
 
     function _withdraw(uint256 shares, bool claimRewardToken) internal {
-        
 
         // Update reward for user
         _updateReward(msg.sender);
+
+        // Retrieve total amount staked and calculated current amount (in FRAK)
+        // (uint256 totalAmountStaked, ) = tokenDistributor.userInfo(address(this));
+        uint256 totalAmountStaked = frakToken.balanceOf(address(this));
+        uint256 currentAmount = (totalAmountStaked * shares) / totalShares;
 
         userInfo[msg.sender].shares -= shares;
         totalShares -= shares;
@@ -216,43 +243,26 @@ contract FeeSharingSystem is Initializable, OwnableUpgradeable, ReentrancyGuardU
 
             if (pendingRewards > 0) {
                 userInfo[msg.sender].rewards = 0;
+                // rewardToken.safeTransfer(msg.sender, pendingRewards);
                 (bool sent,) = msg.sender.call{value: pendingRewards}("");
                 require(sent, "Failed to send Ether");
-                // rewardToken.safeTransfer(msg.sender, pendingRewards);
             }
         }
 
-        // Transfer LOOKS tokens to sender
-        uint256 currentAmount = shares;
-        fraktalToken.safeTransfer(msg.sender, currentAmount);
+        // Transfer FRAK tokens to sender
+        frakToken.safeTransfer(msg.sender, currentAmount);
 
         emit Withdraw(msg.sender, currentAmount, pendingRewards);
     }
 
-    function currentRewardPool() external view returns(uint256){
-        return rewardOnRound[roundNumber];
-    }
-
-    function currentEndBlock() external view returns(uint256){
-        return periodEndBlock[roundNumber];
-    }
-
-    //for emergency by Gnosis Multisig
-    function withdraw() external onlyOwner{
-        uint256 currentBalance = address(this).balance;
-        (bool sent,) = msg.sender.call{value: currentBalance}("");
+    //for gnosis multisig
+    function emergencyWithdraw() external onlyOwner{
+        (bool sent,) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
 
-    //for emergency by Gnosis Multisig
-    function withdrawToken(address tokenAddress) external onlyOwner{
-        uint256 currentBalance = IERC20Upgradeable(tokenAddress).balanceOf(address(this));
-        IERC20Upgradeable(tokenAddress).safeTransfer(msg.sender, currentBalance);
+    receive() external payable{
     }
 
-    receive() external payable {
-        require(block.number>=startBlock,"Pool does not start yet");
-        rewardOnRound[roundNumber+1] += msg.value;
-        updateRewards();
-    }
+    
 }
